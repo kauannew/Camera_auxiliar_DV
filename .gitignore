@@ -179,3 +179,27 @@ cython_debug/
 #  refer to https://docs.cursor.com/context/ignore-files
 .cursorignore
 .cursorindexingignore
+# --- Projeto ---
+# Treino: dados, execuções e pesos ficam fora do git (são grandes e reproduzíveis)
+training/datasets/
+training/runs/
+training/exportados/
+training/*.pt
+training/*.onnx
+# O modelo usado pelo app (web/public/modelos) É versionado, para a demo funcionar após o clone
+
+# Web
+node_modules/
+web/dist/
+
+# Backend
+*.db
+*.sqlite3
+
+# Sistema / editores / segredos
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+.env.local
+*.log

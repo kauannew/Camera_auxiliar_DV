@@ -1,0 +1,10 @@
+# Testado localmente com ultralytics 8.4.178, torch 2.14.1 (CPU), onnx 1.23.2, onnxruntime 1.31.0.
+# No Colab o torch com CUDA já vem instalado; não reinstale.
+ultralytics>=8.4,<8.5
+onnx>=1.17
+onnxslim>=0.1.40
+onnxruntime>=1.20
+pyyaml>=6.0
+pillow>=10.0
+kagglehub>=0.3
+roboflow>=1.1

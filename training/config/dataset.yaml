@@ -1,0 +1,42 @@
+# Configuração do dataset combinado usado no treino.
+#
+# A ORDEM de "classes" define o índice de cada classe na saída do modelo ONNX
+# e no labels.json lido pelo app. Depois de treinar e publicar um modelo,
+# só ACRESCENTE classes no final; nunca reordene.
+
+classes:
+  - buraco
+  # - obstaculo_suspenso   # fase 2: descomente e acrescente uma fonte própria abaixo
+
+# Pasta de saída do dataset unificado (relativa a /training)
+saida: datasets/calcada
+
+# Se uma fonte não tiver split de validação/teste, ela é dividida assim
+divisao_padrao:
+  val: 0.10
+  test: 0.10
+
+# Fontes que serão combinadas. Cada uma é uma pasta já baixada.
+#   formato: yolo  → export "YOLOv8"/"YOLO11" do Roboflow (tem data.yaml).
+#                    Rótulos de segmentação (polígonos) viram bbox automaticamente.
+#   formato: voc   → anotações Pascal VOC (.xml), ex.: dataset de buracos do Kaggle.
+#   mapa_classes   → nome da classe na fonte (sem diferenciar maiúsculas) → nossa classe.
+#                    Classes da fonte que não aparecem aqui são DESCARTADAS.
+fontes:
+  - nome: publico
+    caminho: datasets/brutos/publico
+    formato: yolo
+    mapa_classes:
+      pothole: buraco
+      potholes: buraco
+      pothole-detection: buraco
+      buraco: buraco
+
+  # Fotos próprias de calçadas, tiradas com o celular no suporte de peito
+  # e anotadas no Roboflow. É o que mais aproxima o treino do uso real.
+  # - nome: calcadas_recife
+  #   caminho: datasets/brutos/calcadas_recife
+  #   formato: yolo
+  #   mapa_classes:
+  #     buraco: buraco
+  #     obstaculo_suspenso: obstaculo_suspenso
