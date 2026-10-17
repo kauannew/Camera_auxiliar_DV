@@ -1,0 +1,11 @@
+# Dependências do backend (versões fixas)
+fastapi==0.115.12
+starlette==0.46.2
+uvicorn[standard]==0.34.2
+SQLAlchemy==2.0.41
+pydantic==2.11.5
+anyio==4.15.1
+
+# Testes
+pytest==8.3.5
+httpx==0.28.1

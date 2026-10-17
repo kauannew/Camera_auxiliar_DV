@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mapa de obstáculos – Câmera Auxiliar DV</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+  <style>
+    html, body { height: 100%; margin: 0; }
+    body { display: flex; flex-direction: column; font-family: system-ui, sans-serif; color: #1a1a1a; background: #fff; }
+    header { padding: .5rem 1rem; display: flex; flex-wrap: wrap; align-items: center; gap: .5rem 1.5rem; border-bottom: 1px solid #ccc; }
+    h1 { font-size: 1.15rem; margin: 0; }
+    #status { font-size: .95rem; margin: 0; }
+    #mapa { flex: 1; min-height: 300px; }
+    .legenda { background: #fff; padding: .5rem .75rem; border-radius: 6px; box-shadow: 0 1px 4px rgba(0,0,0,.35); font-size: .95rem; line-height: 1.6; }
+    .legenda h2 { font-size: 1rem; margin: 0 0 .25rem; }
+    .legenda ul { list-style: none; margin: 0; padding: 0; }
+    .bolinha { display: inline-block; width: 14px; height: 14px; border-radius: 50%; border: 2px solid #333; vertical-align: middle; margin-right: .4rem; }
+    .marcador { display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; border: 2px solid #222; font: bold 13px system-ui, sans-serif; color: #111; box-sizing: border-box; }
+    .leaflet-marker-icon:focus { outline: none; }
+    .leaflet-marker-icon:focus .marcador { outline: 3px solid #0b57d0; outline-offset: 2px; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
+    .sr-only:focus { position: static; width: auto; height: auto; margin: 0; clip: auto; padding: .25rem 1rem; }
+    details { padding: .25rem 1rem .5rem; border-top: 1px solid #ccc; max-height: 30vh; overflow: auto; }
+    summary { cursor: pointer; padding: .25rem 0; font-weight: 600; }
+    button { font: inherit; padding: .25rem .75rem; cursor: pointer; text-align: left; }
+    #itens li { margin: .2rem 0; }
+  </style>
+</head>
+<body>
+  <a class="sr-only" href="#lista">Pular para a lista de obstáculos</a>
+  <header>
+    <h1>Mapa colaborativo de obstáculos</h1>
+    <p id="status" role="status" aria-live="polite">Carregando…</p>
+    <button type="button" id="recarregar">Atualizar agora</button>
+  </header>
+  <div id="mapa" role="region" aria-label="Mapa com os obstáculos relatados"></div>
+  <details id="lista">
+    <summary>Lista dos obstáculos visíveis no mapa</summary>
+    <ol id="itens"></ol>
+  </details>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+          integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script>
+    // Centro de Recife-PE (entre Boa Vista e Recife Antigo)
+    const mapa = L.map('mapa').setView([-8.0600, -34.8820], 15);
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    }).addTo(mapa);
+
+    const NOMES = { buraco: 'Buraco' };
+    const nomeClasse = c => NOMES[c] || (c.charAt(0).toUpperCase() + c.slice(1));
+
+    // 1 = amarelo, 2–4 = laranja, 5+ = vermelho
+    function faixa(n) {
+      if (n >= 5) return { cor: '#d7191c', texto: 'muito confirmado' };
+      if (n >= 2) return { cor: '#fd8d3c', texto: 'confirmado' };
+      return { cor: '#ffd92f', texto: 'relato único' };
+    }
+
+    const legenda = L.control({ position: 'bottomright' });
+    legenda.onAdd = () => {
+      const div = L.DomUtil.create('div', 'legenda');
+      div.setAttribute('role', 'region');
+      div.setAttribute('aria-label', 'Legenda');
+      div.innerHTML = '<h2>Confirmações</h2><ul>' +
+        '<li><span class="bolinha" style="background:#ffd92f" aria-hidden="true"></span>1 (relato único)</li>' +
+        '<li><span class="bolinha" style="background:#fd8d3c" aria-hidden="true"></span>2 a 4</li>' +
+        '<li><span class="bolinha" style="background:#d7191c" aria-hidden="true"></span>5 ou mais</li>' +
+        '</ul><small>O número no círculo é a quantidade de confirmações.</small>';
+      return div;
+    };
+    legenda.addTo(mapa);
+
+    const camada = L.layerGroup().addTo(mapa);
+    const statusEl = document.getElementById('status');
+    const itensEl = document.getElementById('itens');
+    const fmtData = d => new Date(d).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+
+    function escapar(s) {
+      const mapaEscape = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+      return String(s).replace(/[&<>"']/g, ch => mapaEscape[ch]);
+    }
+
+    let pedidoAtual = null;
+    let ultimaContagem = null;
+    async function carregar() {
+      if (pedidoAtual) pedidoAtual.abort();
+      pedidoAtual = new AbortController();
+      const bbox = mapa.getBounds().toBBoxString();
+      try {
+        const resp = await fetch('/obstaculos?bbox=' + encodeURIComponent(bbox), { signal: pedidoAtual.signal });
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        const pontos = await resp.json();
+        desenhar(pontos);
+        // só atualiza o texto (e o leitor de tela) quando a contagem muda
+        if (pontos.length !== ultimaContagem) {
+          ultimaContagem = pontos.length;
+          statusEl.textContent = pontos.length === 1
+            ? '1 obstáculo nesta área.'
+            : pontos.length + ' obstáculos nesta área.';
+        }
+      } catch (erro) {
+        if (erro.name === 'AbortError') return;
+        ultimaContagem = null;
+        statusEl.textContent = 'Não foi possível carregar os obstáculos. Tentando de novo em 15 segundos.';
+      }
+    }
+
+    // Marcadores por id: atualizar no lugar evita fechar o popup aberto a cada recarga
+    const marcadores = new Map();
+
+    function desenhar(pontos) {
+      const vistos = new Set();
+      itensEl.innerHTML = '';
+      for (const p of pontos) {
+        vistos.add(p.id);
+        const f = faixa(p.confirmacoes);
+        const plural = p.confirmacoes === 1 ? 'confirmação' : 'confirmações';
+        const descricao = `${nomeClasse(p.classe)}, ${p.confirmacoes} ${plural}, visto por último em ${fmtData(p.ultima_vez)}`;
+        const icone = L.divIcon({
+          className: '',
+          html: `<div class="marcador" style="background:${f.cor}" aria-hidden="true">${p.confirmacoes}</div>`,
+          iconSize: [28, 28], iconAnchor: [14, 14], popupAnchor: [0, -14]
+        });
+        const conteudo =
+          `<strong>${escapar(nomeClasse(p.classe))}</strong><br>` +
+          `Confirmações: ${p.confirmacoes} (${f.texto})<br>` +
+          `Última vez visto: ${fmtData(p.ultima_vez)}<br>` +
+          `Primeira vez: ${fmtData(p.primeira_vez)}<br>` +
+          `Confiança média: ${Math.round(p.confianca_media * 100)}%`;
+
+        let marcador = marcadores.get(p.id);
+        if (!marcador) {
+          marcador = L.marker([p.lat, p.lng], { icon: icone, title: descricao, keyboard: true })
+            .bindPopup(conteudo)
+            .addTo(camada);
+          marcadores.set(p.id, marcador);
+        } else if (marcador.descricao !== descricao) {
+          marcador.setLatLng([p.lat, p.lng]).setIcon(icone).setPopupContent(conteudo);
+        }
+        marcador.descricao = descricao;
+        const el = marcador.getElement();
+        if (el) { el.setAttribute('title', descricao); el.setAttribute('aria-label', descricao); }
+
+        const li = document.createElement('li');
+        const botao = document.createElement('button');
+        botao.type = 'button';
+        botao.textContent = descricao;
+        botao.addEventListener('click', () => {
+          mapa.setView([p.lat, p.lng], Math.max(mapa.getZoom(), 17));
+          marcador.openPopup();
+        });
+        li.appendChild(botao);
+        itensEl.appendChild(li);
+      }
+      // remove os que saíram da área visível (exceto o que está com popup aberto)
+      for (const [id, marcador] of marcadores) {
+        if (!vistos.has(id) && !marcador.isPopupOpen()) {
+          camada.removeLayer(marcador);
+          marcadores.delete(id);
+        }
+      }
+    }
+
+    mapa.on('moveend', carregar);
+    document.getElementById('recarregar').addEventListener('click', carregar);
+    setInterval(carregar, 15000);
+    carregar();
+  </script>
+</body>
+</html>
