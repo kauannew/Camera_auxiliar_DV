@@ -195,6 +195,8 @@ web/dist/
 # Backend
 *.db
 *.sqlite3
+*.db-shm
+*.db-wal
 
 # Sistema / editores / segredos
 .DS_Store

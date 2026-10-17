@@ -5,6 +5,8 @@ Preencher com os números da página `?bench` do app, rodando no celular pelo t�
 | Data | Aparelho | Navegador | Backend ORT | Modelo | ms/frame (média) | p95 | FPS efetivo | Obs. |
 |---|---|---|---|---|---|---|---|---|
 | 2026-10-16 | PC (referência, onnxruntime CPU 1 thread) | — | CPU | provisorio_coco (yolo11n 320) | 22,6 | 24,2 | — | só referência |
+| 2026-10-17 | PC Windows (página ?bench) | Chrome 152 | WASM 4 threads | provisorio_coco (yolo11n 320) | 49,8 | 56,6 | 16,9 | imagem fixa |
+| 2026-10-17 | PC Windows (página ?bench) | Chrome 152 | WebGPU | provisorio_coco (yolo11n 320) | 41,7 | 45,7 | 20,4 | imagem fixa |
 | | Android intermediário | Chrome | WebGPU | buraco (yolo11n 320) | | | | |
 | | Android intermediário | Chrome | WASM | buraco (yolo11n 320) | | | | |
 

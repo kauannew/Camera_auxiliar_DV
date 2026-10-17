@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#000000" />
+    <meta name="description" content="Alerta de buracos à frente pela câmera do celular, como complemento da bengala." />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" href="/icones/icone-192.png" />
+    <link rel="apple-touch-icon" href="/icones/icone-192.png" />
+    <title>Câmera Auxiliar</title>
+  </head>
+  <body>
+    <main id="app">
+      <header class="topo">
+        <h1>Câmera Auxiliar</h1>
+        <p class="aviso">Complemento da bengala. Nunca substitui a bengala.</p>
+      </header>
+
+      <!-- O status também é falado pela voz do app; aria-live desligado evita fala duplicada com o TalkBack -->
+      <p id="status" class="status">Toque no botão para iniciar.</p>
+
+      <button id="botao-principal" class="botao-principal" type="button" aria-pressed="false">
+        Iniciar monitoramento
+      </button>
+
+      <nav class="secundarios" aria-label="Outras opções">
+        <button id="botao-debug" class="botao-secundario" type="button" aria-pressed="false">Modo calibração</button>
+        <a class="botao-secundario" href="/mapa">Mapa de obstáculos</a>
+      </nav>
+
+      <!-- O vídeo precisa existir na página para a captura; só fica visível no modo calibração -->
+      <section id="painel-debug" class="painel-debug escondido-visual" aria-label="Calibração">
+        <div class="palco">
+          <video id="video" playsinline muted></video>
+          <canvas id="sobreposicao"></canvas>
+        </div>
+        <dl id="metricas" class="metricas"></dl>
+      </section>
+
+      <section id="painel-bench" class="painel-bench" hidden aria-label="Medição de desempenho">
+        <h2>Medição de desempenho</h2>
+        <p>Mede o tempo de inferência por quadro neste aparelho. Mantenha a tela ligada.</p>
+        <button id="botao-bench" class="botao-secundario" type="button">Medir agora</button>
+        <pre id="saida-bench" class="saida-bench" aria-live="polite"></pre>
+      </section>
+    </main>
+    <script type="module" src="/src/ui/main.ts"></script>
+  </body>
+</html>

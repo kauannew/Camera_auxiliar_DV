@@ -1,0 +1,176 @@
+/* Alto contraste (preto + amarelo), alvos de toque grandes, texto grande. */
+:root {
+  --fundo: #000;
+  --texto: #fff;
+  --destaque: #ffd400;
+  --perigo: #ff4d4d;
+  --ok: #3ddc84;
+  --borda: #ffd400;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  background: var(--fundo);
+  color: var(--texto);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 18px;
+  line-height: 1.4;
+}
+
+main {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 100dvh;
+  padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.topo h1 {
+  margin: 0;
+  font-size: 1.6rem;
+  color: var(--destaque);
+}
+
+.aviso {
+  margin: 4px 0 0;
+  font-size: 1rem;
+}
+
+.status {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  min-height: 3.2em;
+}
+
+.botao-principal {
+  flex: 1 1 auto;
+  min-height: 42vh;
+  width: 100%;
+  border: 6px solid var(--borda);
+  border-radius: 24px;
+  background: var(--destaque);
+  color: #000;
+  font-size: 2.4rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.botao-principal[aria-pressed="true"] {
+  background: var(--fundo);
+  color: var(--destaque);
+}
+
+.botao-principal:disabled {
+  opacity: 0.6;
+}
+
+.secundarios {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.botao-secundario {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 64px;
+  padding: 12px;
+  border: 3px solid var(--borda);
+  border-radius: 14px;
+  background: var(--fundo);
+  color: var(--destaque);
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.botao-secundario[aria-pressed="true"] {
+  background: var(--destaque);
+  color: #000;
+}
+
+:focus-visible {
+  outline: 4px solid var(--texto);
+  outline-offset: 4px;
+}
+
+/* Fora do modo calibração o vídeo continua na página (a captura precisa dele), mas invisível */
+.escondido-visual {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  overflow: hidden !important;
+  clip-path: inset(50%) !important;
+  opacity: 0.01;
+  pointer-events: none;
+}
+
+.palco {
+  position: relative;
+  width: 100%;
+  background: #111;
+  border: 2px solid var(--borda);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.palco video,
+.palco canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.palco canvas {
+  position: absolute;
+  inset: 0;
+  height: 100%;
+}
+
+.metricas {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 12px;
+  margin: 8px 0 0;
+  font-size: 0.95rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.metricas dt {
+  color: var(--destaque);
+}
+
+.metricas dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.saida-bench {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  background: #111;
+  border: 2px solid var(--borda);
+  border-radius: 12px;
+  padding: 12px;
+  font-size: 0.9rem;
+  min-height: 4em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
