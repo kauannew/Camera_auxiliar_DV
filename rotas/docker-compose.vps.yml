@@ -1,0 +1,27 @@
+# Só na VPS. O Caddy compartilhado (container pawsmanager_caddy, do paws-manager) encontra a API
+# pelo nome do container (rotas-api) na rede dele, então a API não precisa publicar porta.
+# Uso: COMPOSE_FILE=docker-compose.yml:docker-compose.vps.yml no .env da VPS e "docker compose up -d --build".
+services:
+  api:
+    restart: unless-stopped
+    networks: [default, caddy]
+    # Sem limite, o log do Docker cresce até encher o disco
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ORS próprio com o mapa de Salvador (sobe com COMPOSE_PROFILES=ors-local no .env)
+  ors:
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  caddy:
+    name: pawsmanager_default
+    external: true

@@ -1,0 +1,70 @@
+server:
+  port: 8080
+
+ors:
+  # API pública da HeiGIT. O endereço antigo (api.openrouteservice.org) tem só 10% da cota desde 27/08/2026
+  # e será desligado entre 2 e 6/11/2026
+  url: ${ORS_URL:https://api.heigit.org/openrouteservice}
+  # Obrigatória na API pública. Só no servidor, nunca no front nem no repositório
+  chave: ${ORS_API_KEY:}
+  # ORS próprio (ex.: http://ors:8082/ors), com o mapa de uma cidade. Vazio desliga. Dentro da cobertura dele
+  # é usado primeiro (não tem cota); fora, ou se ele cair, vale a API pública. Se a pública falhar, o próprio assume
+  local:
+    url: ${ORS_LOCAL_URL:}
+    nome: ${ORS_LOCAL_NOME:salvador}
+    # Cobertura do mapa carregado: minLon,minLat,maxLon,maxLat (o recorte de Salvador)
+    bbox: ${ORS_LOCAL_BBOX:-38.6995,-13.0174,-38.3034,-12.7336}
+
+camera:
+  # Endereço do back da câmera que lista obstáculos; a API acrescenta ?bbox=minLon,minLat,maxLon,maxLat.
+  # Vazio: usa os obstáculos de teste fixos de obstaculos-teste.json
+  url: ${CAMERA_URL:}
+  # Nível de cada classe que a câmera manda sem "passagem" (classe:nivel, separados por vírgula).
+  # Pensado para quem é cego: obstáculo suspenso a bengala não pega (bloqueada); buraco ela costuma pegar,
+  # mas é risco de queda (dificil). Classe fora da lista vale bloqueada
+  passagem-por-classe: ${CAMERA_PASSAGEM_POR_CLASSE:obstaculo_suspenso:bloqueada,buraco:dificil}
+
+area:
+  # Áreas atendidas: minLon,minLat,maxLon,maxLat, várias separadas por ";", com os nomes na mesma ordem.
+  # Origem e destino têm de estar numa mesma área, senão 400. Vazio desliga (mundo todo).
+  # Padrão: Salvador (o recorte do mapa do ORS próprio) e Recife (onde estão os dados de exemplo da câmera)
+  bbox: ${AREA_BBOX:-38.6995,-13.0174,-38.3034,-12.7336;-35.0200,-8.1600,-34.8600,-7.9300}
+  nome: ${AREA_NOME:Salvador;Recife}
+
+pagina:
+  # Página de teste com mapa em "/". false esconde (ex.: na VPS fora da demo, para ninguém gastar a cota do ORS)
+  teste: ${PAGINA_TESTE:true}
+
+cors:
+  # Domínios do front, separados por vírgula ("*" libera todos; trocar pelo domínio real na VPS)
+  origens: ${CORS_ORIGENS:*}
+
+rota:
+  perfis: ${ROTA_PERFIS:foot-walking,wheelchair}
+  # Perfil quando o pedido não diz qual. foot-walking serve a quem é cego: wheelchair evita escada, meio-fio
+  # e ladeira, que não impedem quem anda, e alonga a rota sem necessidade
+  perfil-padrao: ${ROTA_PERFIL_PADRAO:foot-walking}
+  # Obstáculos abaixo disso são ignorados no cálculo da rota (quando a câmera manda a confiança)
+  confianca-minima: ${ROTA_CONFIANCA_MINIMA:0.6}
+  # Cada obstáculo vira um quadrado com esse lado, enviado ao ORS em avoid_polygons
+  lado-quadrado-metros: ${ROTA_LADO_QUADRADO_METROS:12}
+  # Busca obstáculos até essa distância além do retângulo da rota direta
+  margem-busca-metros: 500
+  # Quanto o início ou o fim do desvio pode se afastar a mais do ponto pedido
+  tolerancia-ponta-metros: 10
+  # Passagem difícil: só desvia se o desvio aumentar a rota em até esse percentual...
+  desvio-percentual: ${ROTA_DESVIO_PERCENTUAL:30}
+  # ...ou em até esses metros, o que for maior (para rotas curtas)
+  desvio-piso-metros: ${ROTA_DESVIO_PISO_METROS:100}
+
+springdoc:
+  # Sem isso o springdoc copia os erros do TratadorDeErros para todo endpoint (ex.: 400 no /health);
+  # as respostas certas estão documentadas em cada controller
+  override-with-generic-response: false
+  swagger-ui:
+    path: /swagger-ui.html
+    # "Try it out" já ligado e tempo de cada resposta visível, para testar sem cliques extras
+    try-it-out-enabled: true
+    display-request-duration: true
+    # Esconde a seção de schemas no fim: os campos já aparecem descritos em cada endpoint
+    default-models-expand-depth: -1

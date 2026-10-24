@@ -1,0 +1,53 @@
+services:
+  api:
+    build: ./api
+    container_name: rotas-api
+    ports:
+      - "${API_PORTA:-8080}:8080"
+    environment:
+      ORS_URL: ${ORS_URL:-https://api.heigit.org/openrouteservice}
+      ORS_API_KEY: ${ORS_API_KEY:-}
+      ORS_LOCAL_URL: ${ORS_LOCAL_URL:-}
+      ORS_LOCAL_BBOX: ${ORS_LOCAL_BBOX:--38.6995,-13.0174,-38.3034,-12.7336}
+      CAMERA_URL: ${CAMERA_URL:-}
+      CAMERA_PASSAGEM_POR_CLASSE: ${CAMERA_PASSAGEM_POR_CLASSE:-obstaculo_suspenso:bloqueada,buraco:dificil}
+      JAVA_OPTS: ${API_JAVA_OPTS:--Xmx384m}
+      TZ: ${API_FUSO:-America/Bahia}
+      AREA_BBOX: ${AREA_BBOX--38.6995,-13.0174,-38.3034,-12.7336;-35.0200,-8.1600,-34.8600,-7.9300}
+      AREA_NOME: ${AREA_NOME:-Salvador;Recife}
+      CORS_ORIGENS: ${CORS_ORIGENS:-*}
+      PAGINA_TESTE: ${PAGINA_TESTE:-true}
+      ROTA_PERFIS: ${ROTA_PERFIS:-foot-walking,wheelchair}
+      ROTA_PERFIL_PADRAO: ${ROTA_PERFIL_PADRAO:-foot-walking}
+      ROTA_CONFIANCA_MINIMA: ${ROTA_CONFIANCA_MINIMA:-0.6}
+      ROTA_LADO_QUADRADO_METROS: ${ROTA_LADO_QUADRADO_METROS:-12}
+      ROTA_DESVIO_PERCENTUAL: ${ROTA_DESVIO_PERCENTUAL:-30}
+      ROTA_DESVIO_PISO_METROS: ${ROTA_DESVIO_PISO_METROS:-100}
+
+  # Legado: ORS próprio, só sobe com --profile ors-local (ou "up -d ors").
+  # Plano B se a API pública falhar: subir com o perfil e usar ORS_URL=http://ors:8082/ors
+  ors:
+    profiles: ["ors-local"]
+    image: openrouteservice/openrouteservice:${ORS_VERSAO:-v10.1.0}
+    container_name: rotas-ors
+    # Sem "ports": o ORS só é acessível pela rede interna, atrás da API.
+    # Para acessar direto, usar também o docker-compose.medir.yml
+    environment:
+      ORS_CONFIG_LOCATION: /config/ors-config.yml
+      REBUILD_GRAPHS: ${ORS_REBUILD:-false}
+      XMS: ${ORS_XMS:-256m}
+      XMX: ${ORS_XMX:-2g}
+      ORS_PERFIL_FOOT_WALKING: ${ORS_PERFIL_FOOT_WALKING:-true}
+      ORS_PERFIL_WHEELCHAIR: ${ORS_PERFIL_WHEELCHAIR:-false}
+      ors.engine.profile_default.build.source_file: /osm/${ORS_PBF:-salvador.osm.pbf}
+    volumes:
+      - ./ors/ors-config.yml:/config/ors-config.yml:ro
+      - ./dados/osm:/osm:ro
+      - ors-graphs:/home/ors/graphs
+      - ors-elevation:/home/ors/elevation_cache
+      - ors-logs:/home/ors/logs
+
+volumes:
+  ors-graphs:
+  ors-elevation:
+  ors-logs:

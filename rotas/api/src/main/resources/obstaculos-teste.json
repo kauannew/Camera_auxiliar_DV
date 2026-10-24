@@ -1,0 +1,6 @@
+[
+  { "latitude": -12.973788, "longitude": -38.509894, "passagem": "bloqueada", "tipo": "buraco", "confianca": 0.90 },
+  { "latitude": -12.973501, "longitude": -38.510592, "passagem": "bloqueada", "tipo": "obra na calçada", "confianca": 0.85 },
+  { "latitude": -12.973857, "longitude": -38.511230, "passagem": "bloqueada", "tipo": "carro na calçada", "confianca": 0.75 },
+  { "latitude": -12.973968, "longitude": -38.511878, "passagem": "bloqueada", "tipo": "lixo", "confianca": 0.40 }
+]

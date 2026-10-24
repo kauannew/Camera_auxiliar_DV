@@ -1,0 +1,13 @@
+# Configuração do openrouteservice. Perfis e arquivo .pbf vêm do .env via docker-compose.
+ors:
+  engine:
+    profile_default:
+      build:
+        elevation: true
+    profiles:
+      driving-car:
+        enabled: false
+      foot-walking:
+        enabled: ${ORS_PERFIL_FOOT_WALKING:true}
+      wheelchair:
+        enabled: ${ORS_PERFIL_WHEELCHAIR:false}

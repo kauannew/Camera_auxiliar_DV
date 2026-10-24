@@ -1,0 +1,6 @@
+# Expõe o ORS em localhost, só para medições e testes diretos.
+# Uso: docker compose -f docker-compose.yml -f docker-compose.medir.yml up -d ors
+services:
+  ors:
+    ports:
+      - "127.0.0.1:${ORS_PORTA:-8082}:8082"
