@@ -39,7 +39,18 @@ Abra no Chrome do Android a URL `https://….trycloudflare.com` que aparecer. Pa
 npm test
 ```
 
-Os testes do Vitest cobrem o núcleo: decodificação e NMS, heurística, rastreio e confirmação, cooldown e prioridade, fila offline, vigia e orquestrador com dublês.
+Os testes do Vitest cobrem o núcleo: decodificação e NMS, heurística, rastreio e confirmação, cooldown e prioridade, fila offline, vigia e orquestrador com dublês, além do serviço de rotas e formatadores.
+
+## Aba Rotas
+
+Rota acessível pela API `https://rotas.antonioqueiroz.dev` (GET `/api/rota?origem=lat,lon&destino=lat,lon`), desenhada num mapa Leaflet, com o trajeto lido em voz passo a passo. Por enquanto o trajeto é fixo (`ROTA_DEMO`, configurada no centro histórico de Salvador para fins de demonstração e homologação da API), em `src/interface/rotas/apiRotas.ts`.
+
+| Variável (`.env.local`) | Efeito |
+|---|---|
+| `VITE_ROTAS_API` | troca a URL base da API de rotas |
+| `VITE_MAPA_TILES` | URL de tiles do mapa (ex.: MapTiler/Stadia com chave). Sem ela, usa o OpenStreetMap, escurecido por CSS |
+
+O servidor de tiles precisa responder com CORS (`Access-Control-Allow-Origin`), porque o app usa COEP `require-corp`. O CARTO `dark_all` passou a exigir chave de API e não serve mais para isso.
 
 ## Parâmetros de URL
 
@@ -69,8 +80,24 @@ src/core/          TypeScript PURO (sem DOM/APIs do navegador), pronto para o na
 src/plataforma/web/  adaptadores: getUserMedia, Worker+ORT, speechSynthesis,
                      Vibration (ou bipes WebAudio), Geolocation, Wake Lock, IndexedDB, fetch
 src/worker/          inferência no Web Worker (WebGPU → WASM), letterbox via OffscreenCanvas
-src/ui/              tela única acessível, sobreposição de calibração, benchmark
+src/interface/       Nova interface React + Tailwind v4 (Sentinela Visual), mobile-first e de alto contraste
+  useSentinela.ts    estado e ações da UI (telas, fase, config, alternância Real vs Simulador)
+  cenarios.ts        contrato de alerta (`Cenario`) + simulador do pitch
+  camera/            ponte com o Orquestrador (ponteOrquestrador.ts) e adaptadores de voz/háptico
+  rotas/             apiRotas (GET /api/rota), useRota (hook cancelável e passo a passo), formatadores
+  componentes/       Cabecalho, BarraStatus, CartaoRadar, Botao, BotaoAlternar, PainelConfig, BordaAlerta, BarraSimulador, MapaRota, NavegacaoAbas
+  telas/             TelaInicio, TelaMonitor, TelaConfig, TelaRotas
+src/index.css        tokens do tema (@theme), fonte Atkinson Hyperlegible, foco AAA, tema Leaflet
+src/ui/              interface anterior (calibração, benchmark), acessível em /legacy.html
 ```
+
+## Modos de Operação
+
+Para garantir a usabilidade e permitir a homologação do sistema em ambientes controlados:
+
+1. **Modo Demonstração (Simulador):** Executa um ciclo de alertas automatizado (`DEMO_AUTOMATICA` a cada 3,5s) ou acionado via teclado (`1`, `2`, `3`, `4`). Ideal para apresentar e testar o feedback multissensorial (voz e vibração) do aplicativo em ambientes fechados, sem depender de iluminação externa, movimentação na rua ou conexão com a câmera.
+2. **Modo Câmera Real (IA YOLO11n ONNX):** Inicializa a câmera traseira do aparelho (`facingMode: environment`), roda o Web Worker com YOLO11n (WebGPU/WASM), analisa quadros com heurística de zonas e priorização real, e reporta métricas de inferência e FPS em tempo real.
+3. **Alternância Dinâmica:** A transição entre os modos pode ser feita diretamente na `TelaInicio` ou no `PainelConfig`. Caso o hardware da câmera falhe ou a permissão seja negada pelo navegador, a UI oferece um *fallback* amigável de 1 clique para retornar ao modo simulado, garantindo a continuidade da experiência do usuário.
 
 Fluxo por quadro: `createImageBitmap(video)` → transferido ao worker → letterbox 320 → ORT → decodificação + NMS → volta à thread principal → heurística → rastreio → priorizador → vibração e voz. Há **contrapressão**: o próximo quadro só é capturado depois que o anterior volta, com teto de `fpsAlvo` (padrão 4).
 
@@ -92,6 +119,6 @@ Números do celular: rode `?bench` no aparelho e registre em `docs/desempenho.md
 ## Limitações (detalhes em `docs/limitacoes.md`)
 
 - **HTTPS obrigatório** para câmera e GPS. Use o túnel.
-- **Safari/iOS não tem Vibration API**: o app toca bipes com o mesmo ritmo. O público da demo é Android + Chrome.
+- **Safari/iOS não tem Vibration API**: o app toca bipes com o mesmo ritmo. A aplicação foi otimizada para o ecossistema Android + Chrome nesta versão inicial.
 - **Só funciona com a tela ligada e a aba aberta.** O app mantém a tela ligada (Wake Lock), pausa sozinho ao ir para segundo plano e avisa por voz ao voltar.
 - Primeira abertura: baixa o modelo (~10 MB) e o runtime (de ~3,7 a ~6,7 MB comprimidos). Depois fica no cache (service worker).

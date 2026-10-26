@@ -205,3 +205,6 @@ Thumbs.db
 .idea/
 .env.local
 *.log
+
+# Contexto local (não versionar)
+context/

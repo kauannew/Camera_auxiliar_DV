@@ -1,0 +1,112 @@
+@import "tailwindcss";
+
+/* Atkinson Hyperlegible (Braille Institute), desenhada para baixa visão.
+   Auto-hospedada via @fontsource: funciona offline no PWA, sem depender do Google Fonts. */
+@import "@fontsource/atkinson-hyperlegible/400.css";
+@import "@fontsource/atkinson-hyperlegible/700.css";
+
+/* ---------- Tokens do tema (Tailwind v4): geram bg-fundo, text-acao, border-perigo etc. ---------- */
+@theme {
+  --color-fundo: #000000;
+  --color-superficie: #1a1a1a;
+  --color-fundo-perigo: #2c0b0e;
+  --color-acao: #ffd600;
+  --color-perigo: #ff453a;
+  --color-seguro: #32d74b;
+  --color-texto: #ffffff;
+  --color-texto-suave: #b3b3b3;
+
+  --font-sans: "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  --animate-alerta: alerta-borda 0.7s ease-in-out infinite alternate;
+
+  @keyframes alerta-borda {
+    from {
+      opacity: 1;
+    }
+    to {
+      opacity: 0.35;
+    }
+  }
+}
+
+@layer base {
+  html {
+    background: var(--color-fundo);
+    color-scheme: dark;
+    /* Respeita o tamanho de fonte escolhido pelo usuário no sistema (rem em todo o app) */
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100dvh;
+    background: var(--color-fundo);
+    color: var(--color-texto);
+    font-family: var(--font-sans);
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  button {
+    font-family: inherit;
+    cursor: pointer;
+  }
+
+  /* Foco ultra visível (WCAG 2.2 AAA, 2.4.13): contorno branco grosso + halo preto,
+     para continuar legível sobre fundo preto, cartões cinza, amarelo e vermelho. */
+  :focus-visible {
+    outline: 4px solid var(--color-texto);
+    outline-offset: 4px;
+    box-shadow: 0 0 0 8px var(--color-fundo);
+  }
+
+  /* Títulos recebem foco por código ao trocar de tela (leitor de tela): sem contorno, pois não são interativos */
+  h2[tabindex="-1"]:focus-visible {
+    outline: none;
+    box-shadow: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+/* ---------- Leaflet (mapa da aba Rotas) ---------- */
+.leaflet-container {
+  background: #0b0b0b;
+  font-family: inherit;
+}
+
+.leaflet-container .leaflet-control-attribution {
+  background: rgba(0, 0, 0, 0.8);
+  color: var(--color-texto);
+  font-size: 0.75rem;
+  padding: 0.125rem 0.375rem;
+}
+
+.leaflet-container .leaflet-control-attribution a {
+  color: var(--color-acao);
+}
+
+/* Escurece só os tiles (a rota e os marcadores ficam em outros panes e mantêm as cores) */
+.mapa-escuro .leaflet-tile-pane {
+  filter: invert(1) hue-rotate(180deg) brightness(0.85) contrast(0.95) saturate(0.6);
+}
+
+/* O elemento de vídeo precisa estar no DOM para a captura de quadros, mas sem ocupar espaço visual */
+.escondido-visual {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  overflow: hidden !important;
+  clip-path: inset(50%) !important;
+  opacity: 0.01;
+  pointer-events: none;
+}
+
