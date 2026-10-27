@@ -122,3 +122,26 @@ describe("formatadores", () => {
     );
   });
 });
+
+describe("trajetos predefinidos e GPS", () => {
+  it("possui rotas cadastradas para todas as 5 regiões do Brasil", async () => {
+    const { ESTADOS_DISPONIVEIS, TRAJETOS_PREDEFINIDOS } = await import("../src/interface/rotas/apiRotas");
+    const estados = ESTADOS_DISPONIVEIS.map((e) => e.id);
+    expect(estados).toEqual(["BA", "PE", "CE", "SP", "RJ", "MG", "DF", "PR", "AM"]);
+    for (const est of estados) {
+      expect(TRAJETOS_PREDEFINIDOS.some((t) => t.estado === est)).toBe(true);
+    }
+  });
+
+  it("calcula destino a ~400 metros da origem", async () => {
+    const { gerarDestinoProximo } = await import("../src/interface/rotas/apiRotas");
+    const origem = { lat: -8.06, lon: -34.88 };
+    const destino = gerarDestinoProximo(origem, 400);
+
+    expect(destino.lat).toBeGreaterThan(origem.lat);
+    expect(destino.lon).toBeGreaterThan(origem.lon);
+    // Variação razoável na ordem de ~0.002 a 0.003 graus
+    expect(Math.abs(destino.lat - origem.lat)).toBeCloseTo(0.0025, 3);
+  });
+});
+

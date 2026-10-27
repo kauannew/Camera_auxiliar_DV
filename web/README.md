@@ -43,7 +43,13 @@ Os testes do Vitest cobrem o núcleo: decodificação e NMS, heurística, rastre
 
 ## Aba Rotas
 
-Rota acessível pela API `https://rotas.antonioqueiroz.dev` (GET `/api/rota?origem=lat,lon&destino=lat,lon`), desenhada num mapa Leaflet, com o trajeto lido em voz passo a passo. Por enquanto o trajeto é fixo (`ROTA_DEMO`, configurada no centro histórico de Salvador para fins de demonstração e homologação da API), em `src/interface/rotas/apiRotas.ts`.
+Rota acessível pela API `https://rotas.antonioqueiroz.dev` (GET `/api/rota?origem=lat,lon&destino=lat,lon`), desenhada num mapa Leaflet, com o trajeto lido em voz passo a passo. 
+
+A interface conta com dois seletores acessíveis (Opção Estado/Cidade) e suporte a GPS em tempo real:
+1. **Bahia (BA):** Salvador · Pelourinho → Portas do Carmo (com desvio de obstáculos ativo).
+2. **Pernambuco (PE):** Recife · Conde da Boa Vista → Marco Zero.
+3. **São Paulo (SP):** São Paulo · Av. Paulista → MASP.
+4. **📍 Meu Local Atual (GPS):** Obtém a latitude e longitude do dispositivo via Geolocation API, calcula um destino acessível a ~400 metros e traça a rota na calçada real de onde o usuário estiver fisicamente.
 
 | Variável (`.env.local`) | Efeito |
 |---|---|

@@ -1,8 +1,8 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { Botao } from "../componentes/Botao";
 import { CartaoRadar } from "../componentes/CartaoRadar";
 import { MapaRota } from "../componentes/MapaRota";
-import { ROTA_DEMO, type Rota } from "../rotas/apiRotas";
+import { ESTADOS_DISPONIVEIS, TRAJETOS_PREDEFINIDOS, type Rota } from "../rotas/apiRotas";
 import { distanciaCurta, duracaoCurta } from "../rotas/formatadores";
 import type { ControleRota } from "../rotas/useRota";
 import { useFocoNoTitulo } from "../useFocoNoTitulo";
@@ -11,15 +11,27 @@ interface Props {
   controle: ControleRota;
 }
 
-/** Aba Rotas: rota acessível (API do Antônio) com mapa e navegação por voz passo a passo. */
+/** Aba Rotas: rota acessível (API do Antônio) com mapa, seletores por Estado/Cidade e GPS em tempo real. */
 export function TelaRotas({ controle }: Props) {
   const tituloRef = useFocoNoTitulo();
-  const { estado, carregar } = controle;
+  const {
+    estado,
+    carregar,
+    origemSelecionada,
+    trajetoId,
+    infoTrajeto,
+    selecionarOrigem,
+    selecionarTrajeto,
+  } = controle;
 
   // Busca na primeira vez que a aba abre; ao voltar de outra aba, reaproveita a rota já carregada
   useEffect(() => {
     if (estado.status === "ocioso") void carregar();
   }, [estado.status, carregar]);
+
+  const trajetosDoEstado = useMemo(() => {
+    return TRAJETOS_PREDEFINIDOS.filter((t) => t.estado === origemSelecionada);
+  }, [origemSelecionada]);
 
   return (
     <>
@@ -28,18 +40,84 @@ export function TelaRotas({ controle }: Props) {
           Rota Acessível
         </h2>
         <p className="mt-1 text-[1.1rem] text-texto-suave">
-          De <strong className="text-texto">{ROTA_DEMO.nomeOrigem}</strong> até{" "}
-          <strong className="text-texto">{ROTA_DEMO.nomeDestino}</strong>{" "}
-          <span className="whitespace-nowrap">(trajeto de demonstração)</span>
+          De <strong className="text-texto">{infoTrajeto.nomeOrigem}</strong> até{" "}
+          <strong className="text-texto">{infoTrajeto.nomeDestino}</strong>
+          {infoTrajeto.detalhe && (
+            <span className="block text-sm font-semibold text-acao mt-0.5">
+              ✦ {infoTrajeto.detalhe}
+            </span>
+          )}
         </p>
       </div>
+
+      {/* Seletor Opção B: Estado / Origem e Cidade / Trajeto */}
+      <section aria-label="Seleção de Trajeto ou Localização" className="rounded-2xl border-2 border-acao/40 bg-superficie p-4 space-y-3">
+        <div className="space-y-1">
+          <label htmlFor="seletor-estado" className="block text-sm font-bold uppercase tracking-wide text-acao">
+            1. Estado / Origem:
+          </label>
+          <select
+            id="seletor-estado"
+            value={origemSelecionada}
+            onChange={(e) => selecionarOrigem(e.target.value)}
+            className="w-full min-h-[48px] rounded-xl border-2 border-acao bg-fundo px-3 py-2 text-base font-bold text-texto focus-visible:outline-white"
+          >
+            <option value="gps">📍 Meu Local Atual (GPS em Tempo Real)</option>
+            {ESTADOS_DISPONIVEIS.map((est) => (
+              <option key={est.id} value={est.id}>
+                {est.nome}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="space-y-1">
+          <label htmlFor="seletor-cidade" className="block text-sm font-bold uppercase tracking-wide text-acao">
+            2. Cidade e Trajeto:
+          </label>
+          {origemSelecionada === "gps" ? (
+            <div className="flex gap-2 items-center">
+              <select
+                id="seletor-cidade"
+                disabled
+                aria-disabled="true"
+                className="w-full min-h-[48px] rounded-xl border-2 border-texto-suave/30 bg-fundo/50 px-3 py-2 text-base font-medium text-texto-suave opacity-75"
+              >
+                <option>📍 Traçado dinâmico pelo seu GPS (~400m)</option>
+              </select>
+              <button
+                type="button"
+                onClick={() => void carregar()}
+                aria-label="Atualizar localização pelo GPS"
+                className="min-h-[48px] min-w-[48px] px-3 py-2 rounded-xl border-2 border-acao bg-fundo text-acao font-bold hover:bg-acao hover:text-fundo transition-colors focus-visible:outline-white"
+                title="Atualizar GPS"
+              >
+                🔄
+              </button>
+            </div>
+          ) : (
+            <select
+              id="seletor-cidade"
+              value={trajetoId}
+              onChange={(e) => selecionarTrajeto(e.target.value)}
+              className="w-full min-h-[48px] rounded-xl border-2 border-acao bg-fundo px-3 py-2 text-base font-bold text-texto focus-visible:outline-white"
+            >
+              {trajetosDoEstado.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.nomeCidade} · {t.titulo}
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
+      </section>
 
       {(estado.status === "ocioso" || estado.status === "carregando") && (
         <CartaoRadar
           variante="info"
           icone="…"
           titulo="Calculando rota"
-          descricao="Buscando o caminho acessível mais seguro."
+          descricao={estado.status === "carregando" && estado.mensagem ? estado.mensagem : "Buscando o caminho acessível mais seguro."}
           aoVivo="polite"
         />
       )}
