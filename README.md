@@ -1,5 +1,12 @@
 # Câmera Auxiliar DV
 
+> 🚀 **Aplicação Online (Vercel):** [https://camera-auxiliar-dv.vercel.app](https://camera-auxiliar-dv.vercel.app)  
+> 🗺️ **Mapa Colaborativo:** [https://camera-auxiliar-dv.vercel.app/mapa](https://camera-auxiliar-dv.vercel.app/mapa)  
+> 📋 **Documentação Swagger (API Render):** [https://camera-auxiliar-dv-backend.onrender.com/docs](https://camera-auxiliar-dv-backend.onrender.com/docs)
+
+> [!NOTE]
+> **Nota de Homologação:** Todas as funcionalidades de negócio, acessibilidade (WCAG 2.2 AAA), integração do motor de IA (YOLO11n ONNX), rotas nacionais e interface foram concluídas e homologadas dentro do prazo do hackathon (até 26/10/2026). As atualizações posteriores foram de caráter estritamente operacional de infraestrutura e hospedagem (configuração de runtime `.python-version` no Render e arquivo de proxy reverso `vercel.json`), sem qualquer alteração lógica ou de escopo na aplicação.
+
 App de navegação assistiva para pessoas com deficiência visual (hackathon de Mobilidade e Soluções Urbanas).
 
 Com o celular preso no **peito**, a câmera detecta **buracos** que a bengala percebe mal e avisa por **vibração e voz em pt-BR**. Cada obstáculo confirmado vai com GPS para um **mapa colaborativo** de pontos problemáticos, base para rotas mais acessíveis no futuro.

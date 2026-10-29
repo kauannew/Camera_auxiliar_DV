@@ -99,14 +99,27 @@
   filter: invert(1) hue-rotate(180deg) brightness(0.85) contrast(0.95) saturate(0.6);
 }
 
+/* O elemento de vídeo quando não está em exibição direta no monitor */
+.camera-oculta {
+  position: fixed !important;
+  top: 0 !important;
+  left: -9999px !important;
+  width: 320px !important;
+  height: 240px !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  z-index: -999 !important;
+}
+
 /* O elemento de vídeo precisa estar no DOM para a captura de quadros, mas sem ocupar espaço visual */
 .escondido-visual {
-  position: absolute !important;
-  width: 1px !important;
-  height: 1px !important;
-  overflow: hidden !important;
-  clip-path: inset(50%) !important;
-  opacity: 0.01;
-  pointer-events: none;
+  position: fixed !important;
+  top: 0 !important;
+  left: -9999px !important;
+  width: 320px !important;
+  height: 240px !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  z-index: -999 !important;
 }
 

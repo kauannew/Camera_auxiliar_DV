@@ -30,7 +30,7 @@ const CONFIG_INICIAL: Configuracoes = {
   bipes: true,
   vibracao: true,
   distanciaAvisoM: 1.5,
-  modo: "simulado",
+  modo: "real",
 };
 
 /**
@@ -46,6 +46,7 @@ export function useSentinela() {
   const [metricas, setMetricas] = useState<MetricasQuadro | null>(null);
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const configRef = useRef(config);
   const faseRef = useRef<Fase>("pronto");
   const ultimaFalaRef = useRef("Sistema pronto para iniciar.");
@@ -96,15 +97,24 @@ export function useSentinela() {
     );
   }
 
-  // Vincula o elemento de vídeo à ponte
+  // Vincula os elementos de vídeo e canvas à ponte
   useEffect(() => {
-    ponteRef.current?.conectarVideo(videoRef.current);
-  }, []);
+    if (videoRef.current) ponteRef.current?.conectarVideo(videoRef.current);
+    if (canvasRef.current) ponteRef.current?.conectarCanvas(canvasRef.current);
+  });
 
   // Iniciar Monitoramento
   const iniciar = useCallback(async () => {
     window.clearTimeout(timerDemoRef.current);
     const cfg = configRef.current;
+
+    // Destrava áudio/voz em navegadores móveis no gesto de toque do usuário
+    if (cfg.bipes) tocarBipe(false);
+    if (cfg.voz && "speechSynthesis" in window) {
+      const u = new SpeechSynthesisUtterance("");
+      u.volume = 0;
+      window.speechSynthesis.speak(u);
+    }
 
     if (cfg.modo === "real") {
       setFase("iniciando");
@@ -112,6 +122,8 @@ export function useSentinela() {
       setTela("monitor");
       setCenario(CENARIOS.livre);
       try {
+        if (videoRef.current) ponteRef.current?.conectarVideo(videoRef.current);
+        if (canvasRef.current) ponteRef.current?.conectarCanvas(canvasRef.current);
         await ponteRef.current?.iniciar();
       } catch (e) {
         console.error("Falha ao iniciar motor de câmera:", e);
@@ -265,6 +277,7 @@ export function useSentinela() {
     mensagemEstado,
     metricas,
     videoRef,
+    canvasRef,
     iniciar,
     pausar,
     repetirAlerta,

@@ -16,6 +16,7 @@ import {
   geradorIdWeb,
   relogioWeb,
 } from "../../plataforma/web/diversosWeb";
+import { SobreposicaoDebug } from "../../ui/debug";
 import type { Cenario } from "../cenarios";
 import { falar, pararFala, tocarBipe, vibrar } from "../feedback";
 import type { Configuracoes } from "../useSentinela";
@@ -49,6 +50,8 @@ function ajustarLimiaresDistancia(distanciaM: number) {
 export class PonteOrquestrador {
   private orquestrador: Orquestrador | null = null;
   private videoEl: HTMLVideoElement | null = null;
+  private canvasEl: HTMLCanvasElement | null = null;
+  private sobreposicao: SobreposicaoDebug | null = null;
   private backend = "—";
   private pendentes = 0;
   private ultimoAlertaTexto = "—";
@@ -61,9 +64,14 @@ export class PonteOrquestrador {
     private readonly callbacks: CallbacksPonte,
   ) {}
 
-  /** Conecta o elemento de vídeo (invisível na tela) necessário para a captura. */
+  /** Conecta o elemento de vídeo necessário para a captura. */
   conectarVideo(video: HTMLVideoElement | null): void {
     this.videoEl = video;
+  }
+
+  /** Conecta o elemento de canvas para a sobreposição de caixas delimitadoras e calibração. */
+  conectarCanvas(canvas: HTMLCanvasElement | null): void {
+    this.canvasEl = canvas;
   }
 
   get estaAtivo(): boolean {
@@ -127,6 +135,12 @@ export class PonteOrquestrador {
   }
 
   private tratarQuadro(info: InfoQuadro): void {
+    try {
+      this.sobreposicao?.desenhar(info);
+    } catch (e) {
+      console.warn("Falha ao desenhar sobreposição de vídeo:", e);
+    }
+
     if (info.alerta) {
       this.ultimoAlertaTexto = info.alerta.mensagem;
       this.ultimoAlertaTimestamp = Date.now();
@@ -177,9 +191,29 @@ export class PonteOrquestrador {
       return;
     }
 
+    if (this.orquestrador) {
+      await this.orquestrador.iniciar();
+      return;
+    }
+
     const cfgAtual = this.obterConfig();
     const config = this.montarConfig(cfgAtual.distanciaAvisoM);
     const dep = this.criarDependencias(config, this.videoEl);
+
+    if (this.canvasEl && this.videoEl) {
+      try {
+        this.sobreposicao = new SobreposicaoDebug(
+          this.canvasEl,
+          this.videoEl,
+          config,
+          () => dep.detector.nomesFalados,
+        );
+      } catch {
+        this.sobreposicao = null;
+      }
+    } else {
+      this.sobreposicao = null;
+    }
 
     this.orquestrador = new Orquestrador(config, dep, {
       aoMudarEstado: (estado, msg) => {
@@ -201,11 +235,17 @@ export class PonteOrquestrador {
   parar(pausando = false): void {
     window.clearTimeout(this.timerRetornoLivre);
     this.emAlerta = false;
+    try {
+      this.sobreposicao?.limpar();
+    } catch {
+      // Ignora erro em ambientes sem suporte a 2D canvas (ex: node unit tests)
+    }
     this.orquestrador?.parar(pausando);
   }
 
   limpar(): void {
     this.parar();
+    this.sobreposicao = null;
     this.orquestrador = null;
   }
 }
