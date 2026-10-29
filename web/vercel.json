@@ -13,5 +13,23 @@
         }
       ]
     }
+  ],
+  "rewrites": [
+    {
+      "source": "/deteccoes",
+      "destination": "https://camera-auxiliar-dv-backend.onrender.com/deteccoes"
+    },
+    {
+      "source": "/obstaculos",
+      "destination": "https://camera-auxiliar-dv-backend.onrender.com/obstaculos"
+    },
+    {
+      "source": "/mapa",
+      "destination": "https://camera-auxiliar-dv-backend.onrender.com/mapa"
+    },
+    {
+      "source": "/saude",
+      "destination": "https://camera-auxiliar-dv-backend.onrender.com/saude"
+    }
   ]
 }
